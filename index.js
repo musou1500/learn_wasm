@@ -1,10 +1,11 @@
 const fs = require("fs");
 
-const instantiateAsm = filename => new Promise((resolve, reject) =>
-  fs.readFile("./add.wasm", (err, data) =>
-    err ? reject(err) : resolve(WebAssembly.instantiate(data))
-  )
-);
+const instantiateAsm = (filename, ...rest) =>
+  new Promise((resolve, reject) =>
+    fs.readFile(filename, (err, data) =>
+      err ? reject(err) : resolve(WebAssembly.instantiate(data, ...rest))
+    )
+  );
 
 const fns = {
   add: async () => {
@@ -19,11 +20,26 @@ const fns = {
       },
       js: { global }
     };
-    const result = await instantiateAsm("./global_var.wasm");
+    const result = await instantiateAsm("./global_var.wasm", importObj);
     result.instance.exports.incGlobal();
     result.instance.exports.incGlobal();
     result.instance.exports.incGlobal();
     console.log(result.instance.exports.getGlobal());
+  },
+  mem: async () => {
+    const mem = new WebAssembly.Memory({initial: 1});
+    const importObj = {
+      js: { mem },
+      console: { log: consoleLogString }
+    };
+    function consoleLogString(offset, length) {
+      var bytes = new Uint8Array(mem.buffer, offset, length);
+      var string = new TextDecoder('utf8').decode(bytes);
+      console.log(string);
+    }
+
+    const result = await instantiateAsm("./mem.wasm", importObj);
+    result.instance.exports.writeHi();
   }
 };
 
