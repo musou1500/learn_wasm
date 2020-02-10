@@ -40,6 +40,11 @@ const fns = {
 
     const result = await instantiateAsm("./mem.wasm", importObj);
     result.instance.exports.writeHi();
+  },
+  tbl: async () => {
+    const result = await instantiateAsm("./tbl.wasm");
+    console.log(result.instance.exports.callByIndex(0));
+    console.log(result.instance.exports.callByIndex(1));
   }
 };
 
